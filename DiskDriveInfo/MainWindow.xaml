@@ -6,7 +6,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:DiskDriveInfo"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="Drive Info"
+    Title="DriveInfo"
+    Background="WhiteSmoke"
     Closing="Window_Closing"
     ContentRendered="Window_ContentRendered"
     KeyDown="Window_Keydown"
@@ -17,6 +18,7 @@
     Topmost="{Binding KeepOnTop, Source={x:Static Properties:Settings.Default}, Mode=TwoWay}"
     mc:Ignorable="d">
 
+    <!--#region Styles-->
     <!--  Style to right align text in the data grid  -->
     <Window.Resources>
         <Style x:Key="alignRight" TargetType="TextBlock">
@@ -26,32 +28,65 @@
             <Setter Property="HorizontalContentAlignment" Value="Right" />
         </Style>
     </Window.Resources>
+    <!--#endregion-->
 
     <Grid>
+        <!--#region Row definitions-->
         <Grid.RowDefinitions>
             <RowDefinition Height="23" />
             <RowDefinition />
         </Grid.RowDefinitions>
+        <!--#endregion-->
 
-        <DockPanel LastChildFill="False" Grid.Row="0" >
-            <Menu DockPanel.Dock="Top" FontSize="14" Background="White">
+        <!--#region Menu-->
+        <DockPanel
+            Grid.Row="0"
+            VerticalAlignment="Bottom"
+            LastChildFill="False">
+            <Menu
+                Background="WhiteSmoke"
+                DockPanel.Dock="Top"
+                FontSize="14">
                 <MenuItem Header="File">
+                    <MenuItem Click="CmCopyToClipboard_Click" Header="Copy to Clipboard" />
+                    <Separator />
                     <MenuItem
-                    Header="Keep on Top"
-                    IsCheckable="True"
-                    StaysOpenOnClick="True"
-                    IsChecked="{Binding KeepOnTop, Source={x:Static Properties:Settings.Default}, Mode=TwoWay}"/>
-                    <Separator/>
-                    <MenuItem Header="Exit" Click="CmExit_Click" />
+                        Click="CmExit_Click"
+                        Header="Exit"
+                        InputGestureText="Alt+F4" />
                 </MenuItem>
-
-                <MenuItem Header="Help" >
-                    <MenuItem Header="About" Click="About_Click" />
-                    <MenuItem Header="View ReadMe" Click="ReadMe_Click" />
+                <MenuItem Header="View">
+                    <MenuItem
+                        Click="CmRefresh_Click"
+                        Header="Refresh"
+                        InputGestureText="F5" />
+                    <Separator />
+                    <MenuItem
+                        Header="Shade alternate rows"
+                        InputGestureText="F7"
+                        IsCheckable="True"
+                        IsChecked="{Binding ShadeAltRows, Source={x:Static Properties:Settings.Default}, Mode=TwoWay}"
+                        StaysOpenOnClick="True" />
+                    <Separator />
+                    <MenuItem
+                        Header="Keep on Top"
+                        IsCheckable="True"
+                        IsChecked="{Binding KeepOnTop, Source={x:Static Properties:Settings.Default}, Mode=TwoWay}"
+                        StaysOpenOnClick="True" />
+                </MenuItem>
+                <MenuItem Header="Help">
+                    <MenuItem
+                        x:Name="mnuAbout"
+                        Click="About_Click"
+                        Header="About"
+                        InputGestureText="F1" />
+                    <MenuItem Click="ReadMe_Click" Header="View ReadMe" />
                 </MenuItem>
             </Menu>
         </DockPanel>
+        <!--#endregion-->
 
+        <!--#region DataGrid-->
         <StackPanel Grid.Row="1">
             <DataGrid
                 x:Name="dataGrid1"
@@ -114,7 +149,9 @@
                 </DataGrid.Columns>
             </DataGrid>
         </StackPanel>
-        <!--  Context menu  -->
+        <!--#endregion-->
+
+        <!--#region Context Menu-->
         <Grid.ContextMenu>
             <ContextMenu>
                 <MenuItem
@@ -122,30 +159,23 @@
                     Click="CmRefresh_Click"
                     Header="Refresh"
                     InputGestureText="F5" />
-
                 <MenuItem
                     Name="cmColors"
-                    Checked="CmColors_Checked"
                     Header="Shade alternate rows"
                     InputGestureText="F7"
                     IsCheckable="True"
-                    Unchecked="CmColors_Unchecked" />
-
+                    IsChecked="{Binding ShadeAltRows, Source={x:Static Properties:Settings.Default}, Mode=TwoWay}" />
                 <Separator />
-
                 <MenuItem
                     Name="cmCopyToClipboard"
                     Click="CmCopyToClipboard_Click"
                     Header="Copy to clipboard" />
-
                 <MenuItem
                     Name="cmTopmost"
                     Header="Keep on Top"
                     IsCheckable="True"
                     IsChecked="{Binding KeepOnTop, Source={x:Static Properties:Settings.Default}, Mode=TwoWay}" />
-
                 <Separator />
-
                 <MenuItem
                     Name="cmExit"
                     Click="CmExit_Click"
@@ -153,6 +183,6 @@
                     InputGestureText="Esc" />
             </ContextMenu>
         </Grid.ContextMenu>
+        <!--#endregion-->
     </Grid>
-
 </Window>

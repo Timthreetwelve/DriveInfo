@@ -1,8 +1,10 @@
 ﻿// Copyright (c) Tim Kennedy. All Rights Reserved. Licensed under the MIT License.
 
+#region Using Directives
 using System;
-using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -10,35 +12,20 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Threading;
-using System.Collections.ObjectModel;
 using TKUtils;
+#endregion
 
 namespace DiskDriveInfo
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-        private bool altRows;
-
-        //! Main Window
         public MainWindow()
         {
             InitializeComponent();
 
             ReadSettings();
-
         }
 
-
-        private void Window_ContentRendered(object sender, EventArgs e)
-        {
-            GetDriveInfo();
-        }
-
-        //! Get information on all drives that are in 'ready' status
         #region Get drive information
         public void GetDriveInfo()
         {
@@ -93,8 +80,7 @@ namespace DiskDriveInfo
         }
         #endregion
 
-        //! Read configuration file
-        #region Read config
+        #region Read settings
         private void ReadSettings()
         {
             // Settings upgrade
@@ -103,106 +89,59 @@ namespace DiskDriveInfo
                 Properties.Settings.Default.Upgrade();
                 Properties.Settings.Default.SettingsUpgradeRequired = false;
                 Properties.Settings.Default.Save();
-                // CleanupPrevSettings must be called AFTER settings Upgrade and Save
                 CleanUp.CleanupPrevSettings();
             }
 
-            // Alternate row shading
+            Properties.Settings.Default.SettingChanging += SettingChanging;
+
             if (Properties.Settings.Default.ShadeAltRows)
             {
-                cmColors.IsChecked = true;
-                altRows = true;
+                AltRowShadingOn();
             }
-            else
-            {
-                cmColors.IsChecked = false;
-                altRows = false;
-            }
-
 
             WindowTitleVersion();
         }
         #endregion Read config
 
-        //! Add version number to the window title
-        #region Window Title
-        public void WindowTitleVersion()
-        {
-            // Get the assembly version
-            Version version = Assembly.GetExecutingAssembly().GetName().Version;
-
-            // Remove the release (last) node
-            string titleVer = version.ToString().Remove(version.ToString().LastIndexOf("."));
-
-            // Set the windows title
-            Title = "DriveInfo - " + titleVer;
-        }
-        #endregion
-
-        //! Handle keypresses
-        #region Keypresses
-        /// <summary>
-        /// Update the window when F5 is pressed
-        /// Color alternating rows when F7 is pressed, revert with F8
-        /// Press Escape to exit
-        /// </summary>
+        #region Keypress Events
         private void Window_Keydown(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.F1)
+            {
+                mnuAbout.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+            }
+
             if (e.Key == Key.F5)
             {
                 GetDriveInfo();
                 dataGrid1.Items.Refresh();
             }
+
             if (e.Key == Key.F7)
             {
-                if (altRows)
+                if (Properties.Settings.Default.ShadeAltRows)
                 {
-                    AltRowShadingOff();
-                    altRows = false;
-                    cmColors.IsChecked = false;
+                    Properties.Settings.Default.ShadeAltRows = false;
                 }
                 else
                 {
-                    AltRowShadingOn();
-                    altRows = true;
-                    cmColors.IsChecked = true;
+                    Properties.Settings.Default.ShadeAltRows = true;
                 }
             }
 
-            if (e.Key == Key.Escape)
+            if (e.Key == Key.C && (e.KeyboardDevice.Modifiers == ModifierKeys.Control))
             {
-                Application.Current.Shutdown();
+                CopytoClipBoard();
             }
         }
         #endregion
 
-        //! Alternate row shading
-        #region Alternate row shading
-        private void AltRowShadingOff()
+        #region Window Events
+        private void Window_ContentRendered(object sender, EventArgs e)
         {
-            dataGrid1.AlternationCount = 0;
-            dataGrid1.RowBackground = new SolidColorBrush(Colors.White);
-            dataGrid1.AlternatingRowBackground = new SolidColorBrush(Colors.White);
-            dataGrid1.Items.Refresh();
-            Properties.Settings.Default.ShadeAltRows = false;
-            altRows = false;
+            GetDriveInfo();
         }
 
-        private void AltRowShadingOn()
-        {
-            dataGrid1.AlternationCount = 1;
-            dataGrid1.RowBackground = new SolidColorBrush(Colors.White);
-            dataGrid1.AlternatingRowBackground = new SolidColorBrush(Colors.WhiteSmoke);
-            dataGrid1.Items.Refresh();
-            Properties.Settings.Default.ShadeAltRows = true;
-            altRows = true;
-        }
-        #endregion
-
-        //! Save the window position at shutdown so that it will start in the same location
-        #region Windows Closing
-        // Triggered by  Closing="Window_Closing"  in the MainWindow.xaml
-        // WindowTop and WindowLeft are saved in user.config
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             // save the property settings
@@ -210,8 +149,7 @@ namespace DiskDriveInfo
         }
         #endregion
 
-        //! Context menu
-        #region Context menu
+        #region Menu Events
         private void CmRefresh_Click(object sender, RoutedEventArgs e)
         {
             GetDriveInfo();
@@ -237,9 +175,56 @@ namespace DiskDriveInfo
         {
             CopytoClipBoard();
         }
+
+        private void About_Click(object sender, RoutedEventArgs e)
+        {
+            About about = new About
+            {
+                Owner = Application.Current.MainWindow,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+            _ = about.ShowDialog();
+        }
+
+        private void ReadMe_Click(object sender, RoutedEventArgs e)
+        {
+            TextFileViewer.ViewTextFile(Path.Combine(AppInfo.AppDirectory, "ReadMe.txt"));
+        }
         #endregion
 
-        //! Copy to clipboard
+        #region Helper Methods
+        #region Window Title
+        public void WindowTitleVersion()
+        {
+            // Get the assembly version
+            Version version = Assembly.GetExecutingAssembly().GetName().Version;
+
+            // Remove the release (last) node
+            string titleVer = version.ToString().Remove(version.ToString().LastIndexOf("."));
+
+            // Set the windows title
+            Title = "DriveInfo - " + titleVer;
+        }
+        #endregion
+
+        #region Alternate row shading
+        private void AltRowShadingOff()
+        {
+            dataGrid1.AlternationCount = 0;
+            dataGrid1.RowBackground = new SolidColorBrush(Colors.White);
+            dataGrid1.AlternatingRowBackground = new SolidColorBrush(Colors.White);
+            dataGrid1.Items.Refresh();
+        }
+
+        private void AltRowShadingOn()
+        {
+            dataGrid1.AlternationCount = 1;
+            dataGrid1.RowBackground = new SolidColorBrush(Colors.White);
+            dataGrid1.AlternatingRowBackground = new SolidColorBrush(Colors.WhiteSmoke);
+            dataGrid1.Items.Refresh();
+        }
+        #endregion
+
         #region Copy to clipboard
         private void CopytoClipBoard()
         {
@@ -261,23 +246,34 @@ namespace DiskDriveInfo
             // Exclude the header row
             dataGrid1.ClipboardCopyMode = DataGridClipboardCopyMode.ExcludeHeader;
         }
-
-
         #endregion
 
-        private void About_Click(object sender, RoutedEventArgs e)
+        private void SettingChanging(object sender, SettingChangingEventArgs e)
         {
-            About about = new About
+            switch (e.SettingName)
             {
-                Owner = Application.Current.MainWindow,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
-            _ = about.ShowDialog();
+                case "ShadeAltRows":
+                    {
+                        if ((bool)e.NewValue)
+                        {
+                            AltRowShadingOn();
+                        }
+                        else
+                        {
+                            AltRowShadingOff();
+                        }
+                        break;
+                    }
+                case "Topmost":
+                    {
+                        Topmost = (bool)e.NewValue;
+                        break;
+                    }
+
+            }
+            Debug.WriteLine($"Setting: {e.SettingName} New Value: {e.NewValue}");
         }
 
-        private void ReadMe_Click(object sender, RoutedEventArgs e)
-        {
-            TextFileViewer.ViewTextFile(Path.Combine(AppInfo.AppDirectory,"ReadMe.txt"));
-        }
+        #endregion
     }
 }

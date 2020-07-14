@@ -110,7 +110,7 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="DI.ico" />
-    <Content Include="Readme.txt">
+    <Content Include="ReadMe.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

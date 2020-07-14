@@ -1,6 +1,16 @@
-Thanks for installing DriveInfo.
+The DriveInfo ReadMe file
 
-You may experience a delay between when you launch the application and when the window actually opens.
+
+Introduction
+============
+
+DriveInfo will display basic information about all disk drives that are in "ready" status.
+
+
+Using DriveInfo
+===============
+
+You may experience a delay between when you launch the application and when the drives are displayed.
 This delay is usually due to one or more of the drives being in sleep or power saving mode. Once the
 drive wakes up the window will appear. There also seems to be a delay if a network drive recently
 became unavailable.
@@ -8,15 +18,8 @@ became unavailable.
 All columns in the grid are sortable by clicking on the column header. Multiple columns may be sorted
 by holding Shift while clicking on the column header.
 
-Pressing F5 will refresh the display. Press F7 to toggle alternate row shading. Pressing the Escape
-key will exit the application.
-
-Right clicking anywhere within the DriveInfo window will display a context menu. Among the commands
-on the context menu is Copy to clipboard. Selecting this option will copy the header row and all the
-drive information to the clipboard in a tab delimited format. There is also a Keep on top option.
-Selecting this will keep the DriveInfo window on top of other windows.
-
-The window position alternate row shading preference will be remembered from session to session.
+Pressing F5 will refresh the display. Press F7 to toggle alternate row shading. Ctrl+C will copy the
+details to the Windows clipboard.
 
 To uninstall, use the regular Windows add/remove programs feature.
 
