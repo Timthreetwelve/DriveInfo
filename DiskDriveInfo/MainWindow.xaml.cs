@@ -8,6 +8,8 @@ using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Security;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -19,6 +21,9 @@ namespace DiskDriveInfo
 {
     public partial class MainWindow : Window
     {
+        string[] drives;
+        DriveInfo info;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -27,56 +32,94 @@ namespace DiskDriveInfo
         }
 
         #region Get drive information
-        public void GetDriveInfo()
+        public async Task GetDriveInf()
         {
-            // Define the driveInfo list to hold the drive information
             var driveInfo = new ObservableCollection<DriveInformation>();
 
-            // Populate the data grid with drive information obtained by GetDriveInfo()
-            dataGrid1.ItemsSource = driveInfo;
-
-            // Get drive information
-            DriveInfo[] drives = DriveInfo.GetDrives();
-
-            // Use Try/Catch since it's possible to get exceptions
+            // Get the drives from the environment
             try
             {
-                // Loop through all drives
-                foreach (DriveInfo d in drives)
-                {
-                    // It's not possible to get info from drives that are not in ready status
-                    if (d.IsReady)
-                    {
-                        // DriveInfo reports sizes as long integers.  Since dividing integers
-                        // won't result in a decimal value, cast them as double to determine
-                        // the percent used.  Formatted by StringFormat=P in the XAML.
-                        double percentFree = (double)d.AvailableFreeSpace / (double)d.TotalSize;
-
-                        double gbFree = d.AvailableFreeSpace / Math.Pow(1000, 3);
-
-                        // Divide the size in bytes by 1000^3 to get GB.
-                        // Formatted by StringFormat={}{0:N1} in XAML.
-                        double totSize = d.TotalSize / Math.Pow(1000, 3);
-
-
-
-                        // Add the information for each drive to the driveInfo list
-                        driveInfo.Add(new DriveInformation(d.Name,
-                                                           d.DriveType.ToString(),
-                                                           d.DriveFormat,
-                                                           d.VolumeLabel,
-                                                           totSize,
-                                                           gbFree,
-                                                           percentFree));
-                    }
-                }
+                drives = Environment.GetLogicalDrives();
             }
-            // Catch any exceptions. We don't really do anything but at least the app won't crash
-            catch (Exception e)
+            catch (IOException ex)
             {
-                Debug.WriteLine($"Error - {e}");
+                _ = MessageBox.Show($"I/O error\ne{ex.Message}",
+                                    "DriveInfo Error",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Error);
+            }
+            catch (SecurityException ex)
+            {
+                _ = MessageBox.Show($"Security error\ne{ex.Message}",
+                                    "DriveInfo Error",
+                                    MessageBoxButton.OK,
+                                    MessageBoxImage.Error);
             }
 
+            foreach (string d in drives)
+            {
+                string msg = $"Processing {d}";
+                Debug.WriteLine(msg);
+                sb1.Content = msg;
+
+                if (d != null)
+                {
+                    try
+                    {
+                        info = new DriveInfo(d);
+                    }
+                    catch (Exception ex)
+                    {
+                        _ = MessageBox.Show($"Error getting drive information for {d}\ne{ex.Message}",
+                                            "DriveInfo Error",
+                                            MessageBoxButton.OK,
+                                            MessageBoxImage.Error);
+                    }
+                    dataGrid1.ItemsSource = driveInfo;
+
+                    await Task.Run(() =>
+                    {
+                        if (info.IsReady)
+                        {
+                            // DriveInfo reports sizes as long integers.  Since dividing integers
+                            // won't result in a decimal value, cast them as double to determine
+                            // the percent used.  Formatted by StringFormat=P in the XAML.
+                            double percentFree = (double)info.AvailableFreeSpace / info.TotalSize;
+
+                            // Divide the size in bytes by 1000^3 to get GB.
+                            // Formatted by StringFormat={}{0:N1} in XAML.
+                            double totSize = info.TotalSize / Math.Pow(1000, 3);
+
+                            double gbFree = info.AvailableFreeSpace / Math.Pow(1000, 3);
+
+                            // modify driveInfo on UI thread
+                            App.Current.Dispatcher.Invoke((Action)delegate
+                            {
+                                // Add the information for each drive to the driveInfo list
+                                driveInfo.Add(new DriveInformation(info.Name,
+                                                                       info.DriveType.ToString(),
+                                                                       info.DriveFormat,
+                                                                       info.VolumeLabel,
+                                                                       totSize,
+                                                                       gbFree,
+                                                                       percentFree));
+
+                            });
+                        }
+                        else
+                        {
+                            if (Properties.Settings.Default.IncludeNotReady)
+                            {
+                                App.Current.Dispatcher.Invoke((Action)delegate
+                            {
+                                driveInfo.Add(new DriveInformation(info.Name, "Not Ready", "", "", null, null, null));
+                            });
+                            }
+                        }
+                    });
+                }
+                sb1.Content = "Processing complete";
+            }
         }
         #endregion
 
@@ -92,18 +135,21 @@ namespace DiskDriveInfo
                 CleanUp.CleanupPrevSettings();
             }
 
+            // Settings change event
             Properties.Settings.Default.SettingChanging += SettingChanging;
 
+            // Alternate row shading
             if (Properties.Settings.Default.ShadeAltRows)
             {
                 AltRowShadingOn();
             }
 
+            // Put version in window title
             WindowTitleVersion();
         }
         #endregion Read config
 
-        #region Keypress Events
+        #region Keyboard Events
         private void Window_Keydown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.F1)
@@ -113,8 +159,7 @@ namespace DiskDriveInfo
 
             if (e.Key == Key.F5)
             {
-                GetDriveInfo();
-                dataGrid1.Items.Refresh();
+                cmRefresh.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
             }
 
             if (e.Key == Key.F7)
@@ -136,10 +181,27 @@ namespace DiskDriveInfo
         }
         #endregion
 
-        #region Window Events
-        private void Window_ContentRendered(object sender, EventArgs e)
+        #region Mouse Events
+        private void DataGrid1_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
-            GetDriveInfo();
+            if (Keyboard.Modifiers != ModifierKeys.Control)
+                return;
+
+            if (e.Delta > 0)
+            {
+                GridLarger();
+            }
+            else if (e.Delta < 0)
+            {
+                GridSmaller();
+            }
+        }
+        #endregion
+
+        #region Window Events
+        private async void Window_ContentRendered(object sender, EventArgs e)
+        {
+            await GetDriveInf();
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -150,9 +212,9 @@ namespace DiskDriveInfo
         #endregion
 
         #region Menu Events
-        private void CmRefresh_Click(object sender, RoutedEventArgs e)
+        private async void CmRefresh_Click(object sender, RoutedEventArgs e)
         {
-            GetDriveInfo();
+            await GetDriveInf();
             dataGrid1.Items.Refresh();
         }
 
@@ -193,6 +255,7 @@ namespace DiskDriveInfo
         #endregion
 
         #region Helper Methods
+
         #region Window Title
         public void WindowTitleVersion()
         {
@@ -218,7 +281,7 @@ namespace DiskDriveInfo
 
         private void AltRowShadingOn()
         {
-            dataGrid1.AlternationCount = 1;
+            dataGrid1.AlternationCount = 2;
             dataGrid1.RowBackground = new SolidColorBrush(Colors.White);
             dataGrid1.AlternatingRowBackground = new SolidColorBrush(Colors.WhiteSmoke);
             dataGrid1.Items.Refresh();
@@ -242,12 +305,10 @@ namespace DiskDriveInfo
 
             // Unselect the cells
             dataGrid1.UnselectAllCells();
-
-            // Exclude the header row
-            dataGrid1.ClipboardCopyMode = DataGridClipboardCopyMode.ExcludeHeader;
         }
         #endregion
 
+        #region Setting change
         private void SettingChanging(object sender, SettingChangingEventArgs e)
         {
             switch (e.SettingName)
@@ -269,10 +330,52 @@ namespace DiskDriveInfo
                         Topmost = (bool)e.NewValue;
                         break;
                     }
-
+                case "IncludeNotReady":
+                    {
+                        cmRefresh.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+                        break;
+                    }
             }
             Debug.WriteLine($"Setting: {e.SettingName} New Value: {e.NewValue}");
         }
+        #endregion
+
+        #region Grid Size
+        private void GridSmaller()
+        {
+            double curZoom = Properties.Settings.Default.GridZoom;
+            if (curZoom > 0.9)
+            {
+                curZoom -= .05;
+                Properties.Settings.Default.GridZoom = curZoom;
+            }
+
+            dataGrid1.LayoutTransform = new System.Windows.Media.ScaleTransform(curZoom, curZoom);
+        }
+
+        private void GridLarger()
+        {
+            double curZoom = Properties.Settings.Default.GridZoom;
+            if (curZoom < 1.2)
+            {
+                curZoom += .05;
+                Properties.Settings.Default.GridZoom = curZoom;
+            }
+
+            dataGrid1.LayoutTransform = new ScaleTransform(curZoom, curZoom);
+        }
+
+        private void GridSmaller_Click(object sender, RoutedEventArgs e)
+        {
+            GridSmaller();
+        }
+
+        private void GridLarger_Click(object sender, RoutedEventArgs e)
+        {
+            GridLarger();
+        }
+
+        #endregion
 
         #endregion
     }

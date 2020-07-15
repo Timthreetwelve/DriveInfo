@@ -4,7 +4,7 @@ The DriveInfo ReadMe file
 Introduction
 ============
 
-DriveInfo will display basic information about all disk drives that are in "ready" status.
+DriveInfo will display basic information about the disk drives that are connected to a computer.
 
 
 Using DriveInfo
@@ -18,8 +18,16 @@ became unavailable.
 All columns in the grid are sortable by clicking on the column header. Multiple columns may be sorted
 by holding Shift while clicking on the column header.
 
-Pressing F5 will refresh the display. Press F7 to toggle alternate row shading. Ctrl+C will copy the
-details to the Windows clipboard.
+Pressing F5 will refresh the display. Press F7 to toggle the shading of alternate rows in the data grid.
+Ctrl+C will copy the details to the Windows clipboard in tab delimited format.
+
+In addition to the above, the menu has selections that let you include or exclude drives that are not
+ready, allow the DriveInfo window to stay on top of other windows, and to make the display larger or
+smaller. You can also use Ctrl + Mouse Wheel to zoom the display.
+
+
+Uninstalling DriveInfo
+======================
 
 To uninstall, use the regular Windows add/remove programs feature.
 
