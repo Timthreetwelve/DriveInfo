@@ -4,7 +4,6 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -26,6 +25,8 @@ namespace DiskDriveInfo
 
         public MainWindow()
         {
+            UserSettings.Init(UserSettings.AppFolder, UserSettings.DefaultFilename, true);
+
             InitializeComponent();
 
             ReadSettings();
@@ -103,12 +104,11 @@ namespace DiskDriveInfo
                                                                        totSize,
                                                                        gbFree,
                                                                        percentFree));
-
                             });
                         }
                         else
                         {
-                            if (Properties.Settings.Default.IncludeNotReady)
+                            if (UserSettings.Setting.IncludeNotReady)
                             {
                                 App.Current.Dispatcher.Invoke((Action)delegate
                             {
@@ -126,28 +126,25 @@ namespace DiskDriveInfo
         #region Read settings
         private void ReadSettings()
         {
-            // Settings upgrade
-            if (Properties.Settings.Default.SettingsUpgradeRequired)
-            {
-                Properties.Settings.Default.Upgrade();
-                Properties.Settings.Default.SettingsUpgradeRequired = false;
-                Properties.Settings.Default.Save();
-                CleanUp.CleanupPrevSettings();
-            }
+            Debug.WriteLine($"Settings file is {UserSettings.GetSettingsFilename()}");
 
             // Settings change event
-            Properties.Settings.Default.SettingChanging += SettingChanging;
+            UserSettings.Setting.PropertyChanged += UserSettingChanged;
 
             // Alternate row shading
-            if (Properties.Settings.Default.ShadeAltRows)
+            if (UserSettings.Setting.ShadeAltRows)
             {
                 AltRowShadingOn();
             }
 
+            // Set data grid zoom level
+            double curZoom = UserSettings.Setting.GridZoom;
+            dataGrid1.LayoutTransform = new ScaleTransform(curZoom, curZoom);
+
             // Put version in window title
             WindowTitleVersion();
         }
-        #endregion Read config
+        #endregion Read settings
 
         #region Keyboard Events
         private void Window_Keydown(object sender, KeyEventArgs e)
@@ -164,14 +161,7 @@ namespace DiskDriveInfo
 
             if (e.Key == Key.F7)
             {
-                if (Properties.Settings.Default.ShadeAltRows)
-                {
-                    Properties.Settings.Default.ShadeAltRows = false;
-                }
-                else
-                {
-                    Properties.Settings.Default.ShadeAltRows = true;
-                }
+                UserSettings.Setting.ShadeAltRows = !UserSettings.Setting.ShadeAltRows;
             }
 
             if (e.Key == Key.C && (e.KeyboardDevice.Modifiers == ModifierKeys.Control))
@@ -206,10 +196,11 @@ namespace DiskDriveInfo
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            // save the property settings
-            Properties.Settings.Default.Save();
+            // Save settings
+            _ = UserSettings.ListSettings();
+            UserSettings.SaveSettings();
         }
-        #endregion
+        #endregion Window Events
 
         #region Menu Events
         private async void CmRefresh_Click(object sender, RoutedEventArgs e)
@@ -252,7 +243,7 @@ namespace DiskDriveInfo
         {
             TextFileViewer.ViewTextFile(Path.Combine(AppInfo.AppDirectory, "ReadMe.txt"));
         }
-        #endregion
+        #endregion Menu Events
 
         #region Helper Methods
 
@@ -266,9 +257,9 @@ namespace DiskDriveInfo
             string titleVer = version.ToString().Remove(version.ToString().LastIndexOf("."));
 
             // Set the windows title
-            Title = "DriveInfo - " + titleVer;
+            Title = $"DriveInfo - {titleVer}";
         }
-        #endregion
+        #endregion Window Title
 
         #region Alternate row shading
         private void AltRowShadingOff()
@@ -286,7 +277,7 @@ namespace DiskDriveInfo
             dataGrid1.AlternatingRowBackground = new SolidColorBrush(Colors.WhiteSmoke);
             dataGrid1.Items.Refresh();
         }
-        #endregion
+        #endregion Alternate row shading
 
         #region Copy to clipboard
         private void CopytoClipBoard()
@@ -306,60 +297,62 @@ namespace DiskDriveInfo
             // Unselect the cells
             dataGrid1.UnselectAllCells();
         }
-        #endregion
+        #endregion Copy to clipboard
 
         #region Setting change
-        private void SettingChanging(object sender, SettingChangingEventArgs e)
+        private void UserSettingChanged(object sender, PropertyChangedEventArgs e)
         {
-            switch (e.SettingName)
+            PropertyInfo prop = sender.GetType().GetProperty(e.PropertyName);
+            var newValue = prop?.GetValue(sender, null);
+            switch (e.PropertyName)
             {
                 case "ShadeAltRows":
+                    if ((bool)newValue)
                     {
-                        if ((bool)e.NewValue)
-                        {
-                            AltRowShadingOn();
-                        }
-                        else
-                        {
-                            AltRowShadingOff();
-                        }
-                        break;
+                        AltRowShadingOn();
                     }
-                case "Topmost":
+                    else
                     {
-                        Topmost = (bool)e.NewValue;
-                        break;
+                        AltRowShadingOff();
                     }
+                    break;
+
+                case "KeepOnTop":
+                    Topmost = (bool)newValue;
+                    break;
+
                 case "IncludeNotReady":
-                    {
-                        cmRefresh.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
-                        break;
-                    }
+                    cmRefresh.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
+                    break;
             }
-            Debug.WriteLine($"Setting: {e.SettingName} New Value: {e.NewValue}");
+            Debug.WriteLine($"***Setting change: {e.PropertyName} New Value: {newValue}");
         }
-        #endregion
+        #endregion Setting change
 
         #region Grid Size
         private void GridSmaller()
         {
-            double curZoom = Properties.Settings.Default.GridZoom;
+            //double curZoom = Properties.Settings.Default.GridZoom;
+            double curZoom = UserSettings.Setting.GridZoom;
             if (curZoom > 0.9)
             {
                 curZoom -= .05;
-                Properties.Settings.Default.GridZoom = curZoom;
+                //Properties.Settings.Default.GridZoom = curZoom;
+                UserSettings.Setting.GridZoom = Math.Round(curZoom, 2);
             }
 
-            dataGrid1.LayoutTransform = new System.Windows.Media.ScaleTransform(curZoom, curZoom);
+            dataGrid1.LayoutTransform = new ScaleTransform(curZoom, curZoom);
         }
 
         private void GridLarger()
         {
-            double curZoom = Properties.Settings.Default.GridZoom;
-            if (curZoom < 1.2)
+            //double curZoom = Properties.Settings.Default.GridZoom;
+            double curZoom = UserSettings.Setting.GridZoom;
+            if (curZoom < 1.3)
             {
                 curZoom += .05;
-                Properties.Settings.Default.GridZoom = curZoom;
+                //Properties.Settings.Default.GridZoom = curZoom;
+                UserSettings.Setting.GridZoom = Math.Round(curZoom, 2);
             }
 
             dataGrid1.LayoutTransform = new ScaleTransform(curZoom, curZoom);
@@ -374,9 +367,8 @@ namespace DiskDriveInfo
         {
             GridLarger();
         }
+        #endregion Grid Size
 
-        #endregion
-
-        #endregion
+        #endregion Helper Methods
     }
 }

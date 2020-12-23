@@ -3,13 +3,11 @@ The DriveInfo ReadMe file
 
 Introduction
 ============
-
 DriveInfo will display basic information about the disk drives that are connected to a computer.
 
 
 Using DriveInfo
 ===============
-
 You may experience a delay between when you launch the application and when the drives are displayed.
 This delay is usually due to one or more of the drives being in sleep or power saving mode. Once the
 drive wakes up the window will appear. There also seems to be a delay if a network drive recently
@@ -28,15 +26,21 @@ smaller. You can also use Ctrl + Mouse Wheel to zoom the display.
 
 Uninstalling DriveInfo
 ======================
-
 To uninstall, use the regular Windows add/remove programs feature.
 
 
 
 Notices and License
 ===================
+DriveInfo was written in C# by Tim Kennedy.
 
-DriveInfo was written in C# by Tim Kennedy. Graphics & sound files were created by Tim Kennedy.
+DriveInfo uses the following icons & packages:
+
+Fugue Icons set https://p.yusukekamiyamane.com/
+
+Json.net v12.0.3 from Newtonsoft https://www.newtonsoft.com/json
+
+Inno Setup was used to create the installer. https://jrsoftware.org/isinfo.php
 
 
 MIT License

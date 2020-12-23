@@ -3,18 +3,18 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:p="clr-namespace:DiskDriveInfo.Properties"
+    xmlns:local="clr-namespace:DiskDriveInfo"
     mc:Ignorable="d"
     Title="DriveInfo"
     Background="WhiteSmoke"
     Closing="Window_Closing"
     ContentRendered="Window_ContentRendered"
     KeyDown="Window_Keydown"
-    Left="{Binding WindowLeft, Source={x:Static p:Settings.Default}, Mode=TwoWay}"
+    Left="{Binding WindowLeft, Source={x:Static local:UserSettings.Setting}, Mode=TwoWay}"
     ResizeMode="CanMinimize"
     SizeToContent="WidthAndHeight"
-    Top="{Binding WindowTop, Source={x:Static p:Settings.Default}, Mode=TwoWay}"
-    Topmost="{Binding KeepOnTop, Source={x:Static p:Settings.Default}, Mode=TwoWay}">
+    Top="{Binding WindowTop, Source={x:Static local:UserSettings.Setting}, Mode=TwoWay}"
+    Topmost="{Binding KeepOnTop, Source={x:Static local:UserSettings.Setting}}">
 
     <!--#region Styles-->
     <!--  Style to right align text in the data grid  -->
@@ -79,19 +79,19 @@
                     <MenuItem
                         Header="Include Not Ready"
                         IsCheckable="True"
-                        IsChecked="{Binding IncludeNotReady, Source={x:Static p:Settings.Default}, Mode=TwoWay}"
+                        IsChecked="{Binding IncludeNotReady, Source={x:Static local:UserSettings.Setting}, Mode=TwoWay}"
                         StaysOpenOnClick="False" />
                     <Separator />
                     <MenuItem
                         Header="Shade alternate rows"
                         IsCheckable="True"
-                        IsChecked="{Binding ShadeAltRows, Source={x:Static p:Settings.Default}, Mode=TwoWay}"
+                        IsChecked="{Binding ShadeAltRows, Source={x:Static local:UserSettings.Setting}, Mode=TwoWay}"
                         StaysOpenOnClick="False" />
                     <Separator />
                     <MenuItem
                         Header="Keep on Top"
                         IsCheckable="True"
-                        IsChecked="{Binding KeepOnTop, Source={x:Static p:Settings.Default}, Mode=TwoWay}"
+                        IsChecked="{Binding KeepOnTop, Source={x:Static local:UserSettings.Setting}, Mode=TwoWay}"
                         StaysOpenOnClick="False" />
                     <Separator />
                     <MenuItem Header="Zoom">
@@ -234,7 +234,7 @@
                     Header="Shade alternate rows"
                     InputGestureText="F7"
                     IsCheckable="True"
-                    IsChecked="{Binding ShadeAltRows, Source={x:Static p:Settings.Default}, Mode=TwoWay}" />
+                    IsChecked="{Binding ShadeAltRows, Source={x:Static local:UserSettings.Setting}, Mode=TwoWay}" />
                 <Separator />
                 <MenuItem Name="cmCopyToClipboard"
                     Click="CmCopyToClipboard_Click"
@@ -242,7 +242,7 @@
                 <MenuItem Name="cmTopmost"
                     Header="Keep on Top"
                     IsCheckable="True"
-                    IsChecked="{Binding KeepOnTop, Source={x:Static p:Settings.Default}, Mode=TwoWay}" />
+                    IsChecked="{Binding KeepOnTop, Source={x:Static local:UserSettings.Setting}, Mode=TwoWay}" />
                 <Separator />
                 <MenuItem Name="cmExit"
                     Click="CmExit_Click"
