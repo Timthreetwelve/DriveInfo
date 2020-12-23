@@ -29,11 +29,11 @@
     <UpdateAssemblyVersion>True</UpdateAssemblyVersion>
     <UpdateAssemblyFileVersion>True</UpdateAssemblyFileVersion>
     <UpdateAssemblyInfoVersion>False</UpdateAssemblyInfoVersion>
-    <AssemblyVersionSettings>IncrementOnDemand.NoneWithAutoReset.IncrementWithResetOnIncrease.TimeStamp</AssemblyVersionSettings>
+    <AssemblyVersionSettings>IncrementOnDemand.NoneWithAutoReset.IncrementOnDemand.DayOfYearStamp</AssemblyVersionSettings>
     <UpdatePackageVersion>False</UpdatePackageVersion>
     <AssemblyInfoVersionType>SettingsVersion</AssemblyInfoVersionType>
     <InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
-    <AssemblyFileVersionSettings>IncrementOnDemand.NoneWithAutoReset.IncrementWithResetOnIncrease.TimeStamp</AssemblyFileVersionSettings>
+    <AssemblyFileVersionSettings>IncrementOnDemand.NoneWithAutoReset.IncrementOnDemand.DayOfYearStamp</AssemblyFileVersionSettings>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
