@@ -1,5 +1,7 @@
 ﻿// Copyright (c) Tim Kennedy. All Rights Reserved. Licensed under the MIT License.
 
+using System.Collections.Generic;
+
 namespace DiskDriveInfo
 {
     internal class DriveInformation
@@ -12,21 +14,6 @@ namespace DiskDriveInfo
         public double? GBFree { get; set; }
         public double? PercentFree { get; set; }
 
-        public DriveInformation(string name,
-                                string driveType,
-                                string driveformat,
-                                string volumelabel,
-                                double? totalsize,
-                                double? gbFree,
-                                double? percentFree)
-        {
-            Name = name;
-            DriveType = driveType;
-            Format = driveformat;
-            Label = volumelabel;
-            TotalSize = totalsize;
-            GBFree = gbFree;
-            PercentFree = percentFree;
-        }
+        public static List<DriveInformation> DriveInfoList = new List<DriveInformation>();
     }
 }

@@ -14,19 +14,11 @@ namespace DiskDriveInfo
             IncludeNotReady = false;
             KeepOnTop = false;
             ShadeAltRows = true;
+            Use1024 = true;
             WindowLeft = 100;
             WindowTop = 100;
         }
         #endregion Constructor
-
-        #region Handle property change
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-        #endregion Handle property change
 
         #region Properties
         public bool IncludeNotReady
@@ -55,6 +47,16 @@ namespace DiskDriveInfo
             set
             {
                 keepOnTop = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool Use1024
+        {
+            get { return use1024; }
+            set
+            {
+                use1024 = value;
                 OnPropertyChanged();
             }
         }
@@ -107,9 +109,19 @@ namespace DiskDriveInfo
         private bool includeNotReady;
         private bool shadeAltRows;
         private bool keepOnTop;
+        private bool use1024;
         private double gridZoom;
         private double windowLeft;
         private double windowTop;
         #endregion Private backing fields
+
+        #region Handle property change event
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+        #endregion Handle property change event
     }
 }
