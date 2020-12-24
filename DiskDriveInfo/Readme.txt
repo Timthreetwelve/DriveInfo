@@ -13,6 +13,9 @@ This delay is usually due to one or more of the drives being in sleep or power s
 drive wakes up the window will appear. There also seems to be a delay if a network drive recently
 became unavailable.
 
+You can choose to have the disk size and free columns display in either GB (1000^3) or in GiB (1024^3).
+The column headers will changes accordingly.
+
 All columns in the grid are sortable by clicking on the column header. Multiple columns may be sorted
 by holding Shift while clicking on the column header.
 
