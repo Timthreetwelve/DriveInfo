@@ -32,6 +32,11 @@ namespace DiskDriveInfo
             ReadSettings();
         }
 
+        private void Window_ContentRendered(object sender, EventArgs e)
+        {
+            GetInfoFromDrive();
+        }
+
         #region Get drive information
         public void GetInfoFromDrive()
         {
@@ -175,9 +180,6 @@ namespace DiskDriveInfo
             log.Info($"{AppInfo.AppName} {AppInfo.TitleVersion} is starting up");
             log.Info($"Settings file is {UserSettings.GetSettingsFilename()}");
 
-            // Settings change event
-            UserSettings.Setting.PropertyChanged += UserSettingChanged;
-
             // Use either GB or GiB for space measurements
             if (UserSettings.Setting.Use1024)
             {
@@ -204,6 +206,9 @@ namespace DiskDriveInfo
 
             // Put version in window title
             WindowTitleVersion();
+
+            // Settings change event
+            UserSettings.Setting.PropertyChanged += UserSettingChanged;
         }
         #endregion Read settings
 

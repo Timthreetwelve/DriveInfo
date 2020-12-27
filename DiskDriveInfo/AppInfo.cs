@@ -164,6 +164,5 @@ namespace TKUtils
         /// </summary>
         public static string AppProcessMainModule =>
                 Process.GetCurrentProcess().MainModule.ModuleName;
-
     }
 }

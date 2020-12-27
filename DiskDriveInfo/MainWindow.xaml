@@ -8,6 +8,7 @@
     Title="DriveInfo"
     Background="WhiteSmoke"
     Closing="Window_Closing"
+    ContentRendered="Window_ContentRendered"
     KeyDown="Window_Keydown"
     Left="{Binding WindowLeft, Source={x:Static local:UserSettings.Setting}, Mode=TwoWay}"
     ResizeMode="CanMinimize"
