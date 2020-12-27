@@ -43,6 +43,8 @@ Fugue Icons set https://p.yusukekamiyamane.com/
 
 Json.net v12.0.3 from Newtonsoft https://www.newtonsoft.com/json
 
+NLog v4.7.6 https://nlog-project.org/
+
 Inno Setup was used to create the installer. https://jrsoftware.org/isinfo.php
 
 

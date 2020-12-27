@@ -85,7 +85,6 @@
     <Compile Include="SettingsManager.cs" />
     <Compile Include="TextFileViewer.cs" />
     <Compile Include="UserSettings.cs" />
-    <Compile Include="WriteLog.cs" />
     <Page Include="About.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -122,6 +121,12 @@
     <None Include="..\.editorconfig">
       <Link>.editorconfig</Link>
     </None>
+    <None Include="NLog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="NLog.xsd">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Resource Include="DI.ico" />
@@ -133,6 +138,8 @@
     <Resource Include="Icons\magnifier--plus.png" />
     <Resource Include="Icons\magnifier.png" />
     <Resource Include="Icons\door-open-out.png" />
+    <Resource Include="Icons\bug.png" />
+    <Resource Include="Icons\document-text.png" />
     <Content Include="ReadMe.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -140,6 +147,9 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json">
       <Version>12.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="NLog">
+      <Version>4.7.6</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -8,7 +8,6 @@
     Title="DriveInfo"
     Background="WhiteSmoke"
     Closing="Window_Closing"
-    ContentRendered="Window_ContentRendered"
     KeyDown="Window_Keydown"
     Left="{Binding WindowLeft, Source={x:Static local:UserSettings.Setting}, Mode=TwoWay}"
     ResizeMode="CanMinimize"
@@ -143,6 +142,16 @@
                     <MenuItem Click="ReadMe_Click" Header="View ReadMe">
                         <MenuItem.Icon>
                             <Image Source="Icons/document-list.png" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem Header="Debug">
+                        <MenuItem Click="MnuViewLog_Click" Header="View Log File">
+                            <MenuItem.Icon>
+                                <Image Source="Icons/document-text.png" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem.Icon>
+                            <Image Source="Icons/bug.png" />
                         </MenuItem.Icon>
                     </MenuItem>
                 </MenuItem>

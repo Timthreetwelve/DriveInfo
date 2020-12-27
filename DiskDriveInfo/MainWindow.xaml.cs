@@ -10,6 +10,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using NLog;
+using NLog.Targets;
 using TKUtils;
 #endregion
 
@@ -17,6 +19,10 @@ namespace DiskDriveInfo
 {
     public partial class MainWindow : Window
     {
+        #region NLog Instance
+        private static readonly Logger log = LogManager.GetCurrentClassLogger();
+        #endregion NLog Instance
+
         public MainWindow()
         {
             UserSettings.Init(UserSettings.AppFolder, UserSettings.DefaultFilename, true);
@@ -24,10 +30,6 @@ namespace DiskDriveInfo
             InitializeComponent();
 
             ReadSettings();
-        }
-        private void Window_ContentRendered(object sender, EventArgs e)
-        {
-            GetInfoFromDrive();
         }
 
         #region Get drive information
@@ -48,6 +50,7 @@ namespace DiskDriveInfo
                 }
                 catch (Exception ex)
                 {
+                    log.Error(ex, $"Error processing drive {drive}");
                     _ = MessageBox.Show($"Error processing drive {drive}\n{ex.Message}",
                         "DriveInfo Error",
                         MessageBoxButton.OK,
@@ -55,14 +58,10 @@ namespace DiskDriveInfo
                 }
             }
             procWatch.Stop();
-            if (dataGrid1.Items.Count != 1)
-            {
-                sb1.Content = $"Displayed {dataGrid1.Items.Count} drives in {procWatch.Elapsed.TotalMilliseconds:N2} ms";
-            }
-            else
-            {
-                sb1.Content = $"Displayed {dataGrid1.Items.Count} drive in {procWatch.Elapsed.TotalMilliseconds:N2} ms";
-            }
+            string drv = dataGrid1.Items.Count != 1 ? "drives" : "drive";
+            string msg = $"Displayed {dataGrid1.Items.Count} {drv} in {procWatch.Elapsed.TotalMilliseconds:N2} ms";
+            sb1.Content = msg;
+            log.Info(msg);
         }
         #endregion Get drive information
 
@@ -123,7 +122,7 @@ namespace DiskDriveInfo
                 DriveInformation.DriveInfoList.Add(di);
             }
             watch.Stop();
-            Debug.WriteLine($"Processed drive {d} in {watch.Elapsed.TotalMilliseconds} ms.");
+            log.Info($"Processed drive {d} in {watch.Elapsed.TotalMilliseconds} ms.");
         }
         #endregion
 
@@ -136,6 +135,7 @@ namespace DiskDriveInfo
             }
             catch (IOException ex)
             {
+                log.Error(ex, "I/O error");
                 _ = MessageBox.Show($"I/O error\n{ex.Message}",
                                     "DriveInfo Error",
                                     MessageBoxButton.OK,
@@ -144,6 +144,7 @@ namespace DiskDriveInfo
             }
             catch (UnauthorizedAccessException ex)
             {
+                log.Error(ex, "Security error");
                 _ = MessageBox.Show($"Security error\n{ex.Message}",
                                     "DriveInfo Error",
                                     MessageBoxButton.OK,
@@ -152,6 +153,7 @@ namespace DiskDriveInfo
             }
             catch (Exception ex)
             {
+                log.Error(ex, "Unknown error");
                 _ = MessageBox.Show($"Unknown error\n{ex.Message}",
                                     "DriveInfo Error",
                                     MessageBoxButton.OK,
@@ -165,8 +167,13 @@ namespace DiskDriveInfo
         #region Read settings
         private void ReadSettings()
         {
-            Debug.WriteLine($"{AppInfo.AppName} {AppInfo.TitleVersion} is starting up");
-            Debug.WriteLine($"Settings file is {UserSettings.GetSettingsFilename()}");
+            // Change the log file filename when debugging
+            string env = Debugger.IsAttached ? "debug" : "temp";
+            GlobalDiagnosticsContext.Set("TempOrDebug", env);
+
+            // Startup message in the temp file
+            log.Info($"{AppInfo.AppName} {AppInfo.TitleVersion} is starting up");
+            log.Info($"Settings file is {UserSettings.GetSettingsFilename()}");
 
             // Settings change event
             UserSettings.Setting.PropertyChanged += UserSettingChanged;
@@ -245,6 +252,11 @@ namespace DiskDriveInfo
         #region Window Events
         private void Window_Closing(object sender, CancelEventArgs e)
         {
+            log.Info("{0} is shutting down.", AppInfo.AppName);
+
+            // Shut down NLog
+            LogManager.Shutdown();
+
             // Save settings
             _ = UserSettings.ListSettings();
             UserSettings.SaveSettings();
@@ -252,7 +264,6 @@ namespace DiskDriveInfo
         #endregion Window Events
 
         #region Menu Events
-
         // File menu
         private void CmCopyToClipboard_Click(object sender, RoutedEventArgs e)
         {
@@ -310,6 +321,10 @@ namespace DiskDriveInfo
         {
             TextFileViewer.ViewTextFile(Path.Combine(AppInfo.AppDirectory, "ReadMe.txt"));
         }
+        private void MnuViewLog_Click(object sender, RoutedEventArgs e)
+        {
+            TextFileViewer.ViewTextFile(GetTempLogFile());
+        }
         #endregion Menu Events
 
         #region Setting change
@@ -343,7 +358,7 @@ namespace DiskDriveInfo
                     cmRefresh.RaiseEvent(new RoutedEventArgs(MenuItem.ClickEvent));
                     break;
             }
-            Debug.WriteLine($"***Setting change: {e.PropertyName} New Value: {newValue}");
+            log.Debug($"***Setting change: {e.PropertyName} New Value: {newValue}");
         }
         #endregion Setting change
 
@@ -414,5 +429,15 @@ namespace DiskDriveInfo
             dataGrid1.LayoutTransform = new ScaleTransform(curZoom, curZoom);
         }
         #endregion Grid Size
+
+        #region Get temp file name
+        public static string GetTempLogFile()
+        {
+            // Ask NLog what the file name is
+            var target = LogManager.Configuration.FindTargetByName("logFile") as FileTarget;
+            var logEventInfo = new LogEventInfo { TimeStamp = DateTime.Now };
+            return target.FileName.Render(logEventInfo);
+        }
+        #endregion Get temp file name
     }
 }
