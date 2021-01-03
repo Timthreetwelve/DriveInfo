@@ -11,3 +11,6 @@ DriveInfo will display basic information about the disk drives that are connecte
 
 * Copy data to the clipboard in tab delimited format. Perfect for pasting into Excel.
 
+<br/>
+![DriveInfo screenshot](/Images/DriveInfo.png)
+
